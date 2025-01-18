@@ -31,7 +31,7 @@ class ContactRepository:
         return contact
 
     async def remove_contact(self, contact_id: int) -> Contact | None:
-        contact = await self.get_contact_by_id(contact_id)
+        contact = await self.get_contacts_by_id(contact_id)
         if contact:
             await self.db.delete(contact)
             await self.db.commit()
@@ -40,7 +40,7 @@ class ContactRepository:
     async def update_contact(
         self, contact_id: int, body: ContactBase
     ) -> Contact | None:
-        contact = await self.get_contact_by_id(contact_id)
+        contact = await self.get_contacts_by_id(contact_id)
         if contact:
             for key, value in body.model_dump(exclude_unset=True).items():
                 setattr(contact, key, value)
@@ -61,7 +61,7 @@ class ContactRepository:
                     Contact.last_name.ilike(f"%{search}%"),
                     Contact.email.ilike(f"%{search}%"),
                     Contact.phone_number.ilike(f"%{search}%"),
-                    Contact.additional_data(f"%{search}%"),
+                    Contact.additional_data.ilike(f"%{search}%"),
                 )
             )
             .offset(skip)
@@ -72,17 +72,20 @@ class ContactRepository:
 
     async def get_upcoming_birthdays(self, days: int) -> List[Contact]:
         today = func.current_date()
-        future_date = func.current_date() + timedelta(days=days)
+        future_date = today + timedelta(days=days)
         stmt = select(Contact).filter(
-            and_(
-                or_(
-                    extract("month", Contact.birthday) == extract("month", today),
-                    extract("day", Contact.birthday) == extract("month", future_date),
+            or_(
+                and_(
+                    func.to_char(Contact.birthday, "MM-DD") >= func.to_char(today, "MM-DD"),
+                    func.to_char(Contact.birthday, "MM-DD") <= func.to_char(future_date, "MM-DD")
                 ),
-                or_(
-                    extract("month", Contact.birthday) >= extract("day", today),
-                    extract("day", Contact.birthday) <= extract("day", future_date),
-                ),
+                and_(
+                    func.to_char(today, "MM-DD") > func.to_char(future_date, "MM-DD"),
+                    or_(
+                        func.to_char(Contact.birthday, "MM-DD") >= func.to_char(today, "MM-DD"),
+                        func.to_char(Contact.birthday, "MM-DD") <= func.to_char(future_date, "MM-DD")
+                    )
+                )
             )
         )
         contacts = await self.db.execute(stmt)

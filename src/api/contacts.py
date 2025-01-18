@@ -66,8 +66,10 @@ async def search_contacts(
     contacts = await contact_service.search_contacts(text, skip, limit)
     return contacts
 
+
+
 @router.post("/upcoming-birthdays", response_model=List[ContactResponse])
-async def upcoming_birthdays(body: ContactBirthdayRequest, db: AsyncSession = Depends(get_db)):
+async def get_upcoming_birthdays(body: ContactBirthdayRequest, db: AsyncSession = Depends(get_db)):
     contact_service = ContactService(db)
-    contacts = await contact_service.upcoming_birthdays(body.days)
+    contacts = await contact_service.get_upcoming_birthdays(body.days)
     return contacts

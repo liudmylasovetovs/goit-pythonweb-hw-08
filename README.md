@@ -3,9 +3,7 @@ pip install fastapi
 pip install pydantic
 pip install pydantic[email]
 
-alembic revision --autogenerate -m "Update models"
-
-Можливі команди для ініціалізації або міграції бази даних (залежить від вашого стеку):
+alembic revision --autogenerate -m "****"
 
 alembic upgrade head
 
