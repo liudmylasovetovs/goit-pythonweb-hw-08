@@ -1,12 +1,12 @@
 from typing import List
-from datetime import timedelta
 
 from sqlalchemy import select, or_, and_, func, extract
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
+from datetime import timedelta
 
 from src.database.models import Contact
-from src.schemas.contacts import Contact, ContactBase
+from src.schemas.contacts import ContactResponse, ContactBase
 
 
 class ContactRepository:
@@ -42,7 +42,7 @@ class ContactRepository:
     ) -> Contact | None:
         contact = await self.get_contact_by_id(contact_id)
         if contact:
-            for key, value in body.dict(exclude_unset=True).items():
+            for key, value in body.model_dump(exclude_unset=True).items():
                 setattr(contact, key, value)
 
             await self.db.commit()
@@ -58,9 +58,9 @@ class ContactRepository:
             .filter(
                 or_(
                     Contact.first_name.ilike(f"%{search}%"),
-                    Contact.last__name.ilike(f"%{search}%"),
+                    Contact.last_name.ilike(f"%{search}%"),
                     Contact.email.ilike(f"%{search}%"),
-                    Contact.phone.ilike(f"%{search}%"),
+                    Contact.phone_number.ilike(f"%{search}%"),
                     Contact.additional_data(f"%{search}%"),
                 )
             )

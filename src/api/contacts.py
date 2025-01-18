@@ -13,7 +13,7 @@ from src.conf import messages
 
 router = APIRouter(prefix="/contacts", tags=["contacts"])
 
-@router.get("/", response_model=List[ContactResponse])
+@router.get("/", response_model=List[ContactResponse], status_code=status.HTTP_200_OK)
 async def read_contacts(
     skip: int = 0, limit: int = 100, db: AsyncSession = Depends(get_db)
 ):
@@ -22,9 +22,9 @@ async def read_contacts(
     return contacts
 
 @router.get("/{contact_id}", response_model=ContactResponse)
-async def read_contact(note_id: int, db: AsyncSession = Depends(get_db)):
+async def read_contact(contact_id: int, db: AsyncSession = Depends(get_db)):
     contact_service = ContactService(db)
-    contact = await contact_service.get_contact(note_id)
+    contact = await contact_service.get_contact(contact_id)
     if contact is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail= messages.CONTACT_NOT_FOUND
